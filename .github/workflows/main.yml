@@ -39,14 +39,14 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.64.2 # Use uma versão específica para builds consistentes
+          version: v1.64.2
           args: --verbose
 
   # Job para rodar os testes
   test:
     name: Run Go Tests
     runs-on: ubuntu-latest
-    needs: build-lint # Executa após o job de lint
+    needs: build-lint
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,13 +62,11 @@ jobs:
       - name: Run tests and generate report
         run: |
           echo "Running tests and generating report..."
-          # CGO_ENABLED=1 é necessário se houver código C, mas requer gcc.
-          # A imagem ubuntu-latest já tem o gcc.
           CGO_ENABLED=1 gotestsum --junitfile report.xml --format testname
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
-        if: always() # Sempre executa este passo, mesmo que o anterior falhe
+        if: always()
         with:
           name: test-reports
           path: report.xml
@@ -77,26 +75,24 @@ jobs:
   release:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    needs: test # Executa após os testes passarem
-    # Executa apenas quando há um push na branch 'main'
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    needs: test
+    # Executa em push na main OU em workflow_dispatch
+    if: (github.event_name == 'push' && github.ref_name == 'main') || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-        # Essencial para builds multi-plataforma (ex: ARM em runners x86)
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        # Cria um builder do Docker que suporta builds multi-plataforma
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASS }} # Segredo configurado no GitHub
+          password: ${{ secrets.DOCKER_PASS }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -114,9 +110,10 @@ jobs:
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: release # Depende do sucesso do build
-    if: github.event_name == 'push' && github.ref_name == 'main'
-    environment: staging # Define um ambiente (opcional, bom para proteção)
+    needs: release
+    # Executa em push na main OU em workflow_dispatch
+    if: (github.event_name == 'push' && github.ref_name == 'main') || github.event_name == 'workflow_dispatch'
+    environment: staging
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,11 +140,11 @@ jobs:
           TF_VAR_docker_image_tag: ${{ env.DOCKER_IMAGE_TAG }}
 
   # Job para destruir a infraestrutura manualmente
-  destroy:
+  cleanup:
     name: Destroy Staging
     runs-on: ubuntu-latest
     needs: deploy
-    # Executa apenas quando acionado manualmente (workflow_dispatch)
+    # Executa APENAS quando acionado manualmente
     if: github.event_name == 'workflow_dispatch'
     environment: staging
     steps:
@@ -165,4 +162,4 @@ jobs:
       - name: Terraform Destroy
         run: terraform -chdir=infra destroy -auto-approve
         env:
-          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }} 
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
