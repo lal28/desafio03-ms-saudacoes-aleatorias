@@ -143,9 +143,10 @@ jobs:
           TF_VAR_docker_image_tag: ${{ env.DOCKER_IMAGE_TAG }}
 
   # Job para destruir a infraestrutura manualmente
-  cleanup:
+  destroy:
     name: Destroy Staging
     runs-on: ubuntu-latest
+    needs: deploy
     # Executa apenas quando acionado manualmente (workflow_dispatch)
     if: github.event_name == 'workflow_dispatch'
     environment: staging
