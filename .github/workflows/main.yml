@@ -28,7 +28,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.23'
 
       - name: Go Fmt & Vet
         run: |
@@ -39,7 +39,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.61 # Use uma versão específica para builds consistentes
+          version: v1.62
           args: --verbose
 
   # Job para rodar os testes
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.23'
 
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest
