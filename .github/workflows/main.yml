@@ -39,7 +39,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.61 # Use uma versão específica para builds consistentes
           args: --verbose
 
   # Job para rodar os testes
