@@ -1,105 +1,64 @@
-# API de Saudações Aleatórias
+# Pipeline CI/CD - Microserviço Saudações Aleatórias
 
-Este é um simples microserviço RESTful construído em Go que fornece saudações aleatórias e permite o cadastro de novas saudações.
+## 📚 Sobre o Projeto
 
-## ✨ Funcionalidades
+Este projeto faz parte da solução de um desafio de um curso de DevOps e implementa uma pipeline CI/CD completa para um microserviço Go.
 
-  * Obter uma saudação aleatória do banco de dados.
-  * Cadastrar uma nova saudação.
-  * Utiliza o framework Gin para o roteamento e gerenciamento das requisições HTTP.
-  * Usa GORM como ORM para interagir com o banco de dados.
-  * Utiliza SQLite como banco de dados, que é criado e populado automaticamente na primeira execução.
-  * O ambiente de desenvolvimento é gerenciado pelo Devbox.
+**Template base:** https://gitlab.com/avanti-dvp/ms-saudacoes-aleatorias
 
-## 🛠️ Tecnologias Utilizadas
+## 🔧 Principais Mudanças Implementadas
 
-  * **Go (Golang)**: Linguagem de programação principal.
-  * **Gin**: Framework web para Go.
-  * **GORM**: ORM para Go.
-  * **SQLite**: Banco de dados SQL embarcado.
-  * **Devbox**: Ferramenta para criar ambientes de desenvolvimento isolados.
+### 1. **Renomeação dos Jobs**
+Os jobs foram renomeados para seguir as especificações do curso:
+- `lint` → `build-lint`
+- `build-and-push` → `release`
+- `destroy` → `cleanup`
 
-## 🚀 Como Executar o Projeto
+### 2. **Fluxo de Execução**
+A pipeline foi ajustada para três cenários:
 
-### Pré-requisitos
+**Push em branches não-main:**
+```
+build-lint → test
+```
 
-Antes de começar, você precisa ter o [Devbox](https://www.google.com/search?q=https://www.jetify.com/devbox/docs/installing-devbox/) instalado em sua máquina.
+**Push na branch main:**
+```
+build-lint → test → release → deploy
+```
 
-### Passos
+**Execução manual (workflow_dispatch):**
+```
+build-lint → test → release → deploy → cleanup
+```
 
-1.  **Clone o repositório:**
+### 3. **Condicionais dos Jobs**
+- Jobs `release` e `deploy`: executam em push na main **OU** em workflow_dispatch
+- Job `cleanup`: executa **APENAS** em workflow_dispatch manual
 
-    ```bash
-    git clone <URL_DO_SEU_REPOSITORIO>
-    cd ms-saudacoes-aleatorias
-    ```
 
-2.  **Inicie o ambiente Devbox:**
-    O Devbox instalará automaticamente o Go na versão especificada no arquivo `devbox.json`.
+### 4. **Ajustes nas versões Utilizadas**
+- **Go**: 1.24 (build-lint) e 1.22 (test)
+- **golangci-lint**: v1.64.2 (compatível com Go 1.24)
 
-    ```bash
-    devbox shell
-    ```
+## 🚀 Como Usar
 
-3.  **Execute a aplicação:**
-    Este comando irá iniciar o servidor na porta `8080`.
+### Deploy Automático
+Faça push na branch `main` e a pipeline executará automaticamente até o deploy.
 
-    ```bash
-    go run main.go
-    ```
+### Cleanup Manual
+1. Vá em **Actions** no GitHub
+2. Selecione o workflow **"CI/CD Pipeline"**
+3. Clique em **"Run workflow"**
+4. Selecione a branch
+5. Clique em **"Run workflow"** novamente
 
-Ao iniciar, a aplicação criará um arquivo de banco de dados chamado `greetings.db` e o populará com uma lista inicial de saudações.
+Isso executará todo o fluxo incluindo a destruição da infraestrutura ao final.
 
-## 📖 API Endpoints
+## 📋 Requisitos
 
-A API possui o prefixo `/api`.
+### Secrets do GitHub
+- `DOCKER_PASS`: Token de acesso ao Docker Hub
+- `KOYEB_TOKEN`: Token de acesso à plataforma Koyeb
 
-### Obter uma Saudação Aleatória
 
-Retorna uma saudação aleatória do banco de dados.
-
-  * **Método:** `GET`
-  * **Endpoint:** `/api/saudacoes/aleatorio`
-  * **Resposta de Sucesso (200 OK):**
-    ```json
-    {
-      "saudação": "Que a Força esteja com você"
-    }
-    ```
-  * **Exemplo com cURL:**
-    ```bash
-    curl http://localhost:8080/api/saudacoes/aleatorio
-    ```
-
-### Cadastrar uma Nova Saudação
-
-Adiciona uma nova saudação ao banco de dados.
-
-  * **Método:** `POST`
-  * **Endpoint:** `/api/saudacoes`
-  * **Corpo da Requisição (JSON):**
-    O campo `text` é obrigatório.
-    ```json
-    {
-      "text": "Sua nova saudação aqui"
-    }
-    ```
-  * **Resposta de Sucesso (201 Created):**
-    ```json
-    {
-      "data": {
-        "ID": 10,
-        "CreatedAt": "2024-05-18T16:05:23.038166-03:00",
-        "UpdatedAt": "2024-05-18T16:05:23.038166-03:00",
-        "DeletedAt": null,
-        "Text": "Sua nova saudação aqui"
-      }
-    }
-    ```
-  * **Exemplo com cURL:**
-    ```bash
-    curl -X POST \
-      -H "Content-Type: application/json" \
-      -d '{"text":"Live long and prosper"}' \
-      http://localhost:8080/api/saudacoes
-    ```
