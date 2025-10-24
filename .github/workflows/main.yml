@@ -165,4 +165,4 @@ jobs:
       - name: Terraform Destroy
         run: terraform -chdir=infra destroy -auto-approve
         env:
-          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }} 
